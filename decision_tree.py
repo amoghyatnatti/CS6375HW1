@@ -26,6 +26,7 @@
 # the package scikit-learn OR ANY OTHER machine learning package in THIS file.
 
 import numpy as np
+import math
 
 
 def partition(x):
@@ -56,8 +57,17 @@ def entropy(y):
     """
 
     # INSERT YOUR CODE HERE
+    part = partition(y)
+    # print(len(part[1])/1)
+    totalCount = len(y)
 
-    raise Exception('Function not yet implemented!')
+    Hz = 0.0
+    for key in part:
+        vCount = len(part.get(key))
+        vProb = vCount/totalCount
+        Hz += -vProb * math.log(vProb, 2)
+    # print(Hz)
+    return Hz
 
 
 def mutual_information(x, y):
@@ -70,8 +80,15 @@ def mutual_information(x, y):
     """
 
     # INSERT YOUR CODE HERE
-    print(x)
-    raise Exception('Function not yet implemented!')
+    Hy = entropy(y)
+    xVal, xCounts = np.unique(x, return_counts=True)
+
+    Hyx = 0.0
+    for i in range(len(xVal)):
+        prob = xCounts[i]/len(x)
+        Hyx += prob*entropy(y[x == xVal[i]])
+
+    return Hy-Hyx
 
 
 def id3(x, y, attribute_value_pairs=None, depth=0, max_depth=5):
@@ -116,9 +133,8 @@ def id3(x, y, attribute_value_pairs=None, depth=0, max_depth=5):
     """
 
     # INSERT YOUR CODE HERE. NOTE: THIS IS A RECURSIVE FUNCTION.
-    for i in range(len(x[0])):
-        z = partition(x[:, i])
-        print(z)
+
+    mutual_information(x[:, 0], y)
 
 
 def predict_example(x, tree):
@@ -185,6 +201,7 @@ if __name__ == '__main__':
 
     # Learn a decision tree of depth 3
     decision_tree = id3(Xtrn, ytrn, max_depth=3)
+
     # visualize(decision_tree)
 
     # # Compute the test error
