@@ -27,6 +27,7 @@
 
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 
 def partition(x):
@@ -131,10 +132,39 @@ def id3(x, y, attribute_value_pairs=None, depth=0, max_depth=5):
              (1, 1, True): 1}},
      (4, 1, True): 1}
     """
-
+    
     # INSERT YOUR CODE HERE. NOTE: THIS IS A RECURSIVE FUNCTION.
+    if len(set(y)) == 1:
+        return y[0]
 
-    mutual_information(x[:, 0], y)
+    if attribute_value_pairs is None:
+        attribute_value_pairs = []
+        for i in range(len(x[0])):
+            uniqueVals = np.unique(x[:, i])
+            for j in range(len((uniqueVals))):
+                attribute_value_pairs.append((i, uniqueVals[j]))
+
+    if len(attribute_value_pairs) == 0 or depth == max_depth:
+        return np.bincount(y).argmax()
+    
+    node = {}
+
+    maxInfo = 0
+    maxVariable = None
+    for (k,v) in attribute_value_pairs:
+        info = mutual_information(np.array(x[:,k] == v), y)
+        if info > maxInfo:
+            maxInfo = info
+            maxVariable = (k,v)
+
+    xTrue = x[(x[:,maxVariable[0]] == maxVariable[1])]
+    xFalse = x[(x[:,maxVariable[0]] != maxVariable[1])]
+    yTrue = y[(x[:,maxVariable[0]] == maxVariable[1])]
+    yFalse = y[(x[:,maxVariable[0]] != maxVariable[1])]
+    node[(maxVariable[0], maxVariable[1], False)] = id3(xFalse, yFalse, attribute_value_pairs=attribute_value_pairs, depth=depth+1, max_depth=max_depth)
+    node[(maxVariable[0], maxVariable[1], True)] = id3(xTrue, yTrue, attribute_value_pairs=attribute_value_pairs, depth=depth+1, max_depth=max_depth)
+
+    return node
 
 
 def predict_example(x, tree):
@@ -146,7 +176,13 @@ def predict_example(x, tree):
     """
 
     # INSERT YOUR CODE HERE. NOTE: THIS IS A RECURSIVE FUNCTION.
-    raise Exception('Function not yet implemented!')
+    if isinstance(tree, (int, np.int64, np.int32)):
+            return tree
+    for key in tree.keys():
+        present = x[key[0]] == key[1]
+        predicted_label = predict_example(x, tree[(key[0], key[1], present)])
+        break
+    return predicted_label
 
 
 def compute_error(y_true, y_pred):
@@ -157,7 +193,11 @@ def compute_error(y_true, y_pred):
     """
 
     # INSERT YOUR CODE HERE
-    raise Exception('Function not yet implemented!')
+    count = 0
+    for i in range(len(y_true)):
+        count += 0 if y_true[i] == y_pred[i] else 1
+    return count / len(y_true)
+
 
 
 def visualize(tree, depth=0):
@@ -200,12 +240,36 @@ if __name__ == '__main__':
     Xtst = M[:, 1:]
 
     # Learn a decision tree of depth 3
-    decision_tree = id3(Xtrn, ytrn, max_depth=3)
+    decision_tree = id3(Xtrn, ytrn, max_depth=100)
 
-    # visualize(decision_tree)
+    visualize(decision_tree)
 
-    # # Compute the test error
-    # y_pred = [predict_example(x, decision_tree) for x in Xtst]
-    # tst_err = compute_error(ytst, y_pred)
+    # Compute the test error
+    y_pred = [predict_example(x, decision_tree) for x in Xtst]
+    print(y_pred)
+    print(ytst)
+    tst_err = compute_error(ytst, y_pred)
 
-    # print('Test Error = {0:4.2f}%.'.format(tst_err * 100))
+    print('Test Error = {0:4.2f}%.'.format(tst_err * 100))
+
+    # Learn a decision tree of depths 1-10 and plot a graph of the test error
+    depths = np.arange(1, 11)
+    training_errors = []
+    testing_errors = []
+    for i in range (1,11):
+        decision_tree = id3(Xtrn, ytrn, max_depth=i)
+        y_pred = [predict_example(x, decision_tree) for x in Xtst]
+        training_errors.append(compute_error(ytrn, y_pred))
+        testing_errors.append(compute_error(ytst, y_pred))
+    
+    print(depths)
+    print(training_errors)
+    print(testing_errors)
+
+    plt.title("Depth vs. Error")
+    plt.xlabel("Depths")
+    plt.ylabel("Errors")
+    plt.plot(depths, testing_errors, color ="red")
+    plt.plot(depths, training_errors, color ="blue")
+    plt.show()
+
