@@ -25,10 +25,11 @@
 # visualize, test, or save the data and results. However, you MAY NOT utilize
 # the package scikit-learn OR ANY OTHER machine learning package in THIS file.
 
+from cProfile import label
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-
+from sklearn import tree
 
 def partition(x):
     """
@@ -156,7 +157,7 @@ def id3(x, y, attribute_value_pairs=None, depth=0, max_depth=5):
         if info > maxInfo:
             maxInfo = info
             maxVariable = (k,v)
-
+ 
     xTrue = x[(x[:,maxVariable[0]] == maxVariable[1])]
     xFalse = x[(x[:,maxVariable[0]] != maxVariable[1])]
     yTrue = y[(x[:,maxVariable[0]] == maxVariable[1])]
@@ -225,16 +226,19 @@ def visualize(tree, depth=0):
             print('|\t' * (depth + 1), end='')
             print('+-- [LABEL = {0}]'.format(sub_trees))
 
+def question3(x,y):
+    clf = tree.DecisionTreeClassifier(criterion="entropy")
+    clf = clf.fit(x,y)
 
 if __name__ == '__main__':
     # Load the training data
-    M = np.genfromtxt('./monks-1.train', missing_values=0,
+    M = np.genfromtxt('./monks-3.train', missing_values=0,
                       skip_header=0, delimiter=',', dtype=int)
     ytrn = M[:, 0]
     Xtrn = M[:, 1:]
 
     # Load the test data
-    M = np.genfromtxt('./monks-1.test', missing_values=0,
+    M = np.genfromtxt('./monks-3.test', missing_values=0,
                       skip_header=0, delimiter=',', dtype=int)
     ytst = M[:, 0]
     Xtst = M[:, 1:]
@@ -258,18 +262,20 @@ if __name__ == '__main__':
     testing_errors = []
     for i in range (1,11):
         decision_tree = id3(Xtrn, ytrn, max_depth=i)
-        y_pred = [predict_example(x, decision_tree) for x in Xtst]
-        training_errors.append(compute_error(ytrn, y_pred))
-        testing_errors.append(compute_error(ytst, y_pred))
+        y_pred_train = [predict_example(x, decision_tree) for x in Xtrn]
+        training_errors.append(compute_error(ytrn, y_pred_train))
+        y_pred_test = [predict_example(x, decision_tree) for x in Xtst]
+        testing_errors.append(compute_error(ytst, y_pred_test))
     
     print(depths)
     print(training_errors)
     print(testing_errors)
 
-    plt.title("Depth vs. Error")
+    plt.title("Monks 3 Depth vs. Error")
     plt.xlabel("Depths")
-    plt.ylabel("Errors")
-    plt.plot(depths, testing_errors, color ="red")
-    plt.plot(depths, training_errors, color ="blue")
+    plt.ylabel("Error")
+    plt.plot(depths, training_errors, color ="blue", marker='o', label='Training Errors')
+    plt.plot(depths, testing_errors, color ="red", marker='o', label='Testing Errors')
+    plt.legend()
     plt.show()
 
