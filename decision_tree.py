@@ -246,7 +246,7 @@ def learning_curve(Xtrn, ytrn, title):
     plt.legend()
     plt.show()
 
-def confusion_matrix_question2(Xtrn, ytrn, depth):
+def confusion_matrix_question2(Xtrn, ytrn, ytst, depth):
     decision_tree = id3(Xtrn, ytrn, max_depth=depth)
     visualize(decision_tree)
     tp = 0
@@ -263,6 +263,8 @@ def confusion_matrix_question2(Xtrn, ytrn, depth):
             fp += 1
         elif ytst[i] == 0 and y_pred[i] == 0:
             tn += 1
+    l =[[tp, fn], [fp, tn]]
+    print(l)
     tp /= totalCount
     fp /= totalCount
     fn /= totalCount
@@ -287,6 +289,8 @@ def question3(Xtrn, ytrn, Xtst, ytst):
     graph.render('sklearn-learning-curve',view=True)
     y_pred = clf.predict(Xtst)
     print(confusion_matrix(ytst, y_pred))
+
+
 
 if __name__ == '__main__':
     # Load the training data
@@ -314,6 +318,6 @@ if __name__ == '__main__':
     # learning_curve(Xtrn, ytrn, "Monks 3 Learning curve")
 
     # # Prints the confusion matrix and the learned decision tree for depth = 1 and 2
-    confusion_matrix_question2(Xtrn, ytrn, 1)
-    confusion_matrix_question2(Xtrn, ytrn, 2)
+    # confusion_matrix_question2(Xtrn, ytrn, ytst, 1)
+    # confusion_matrix_question2(Xtrn, ytrn, ytst, 2)
     # question3(Xtrn, ytrn, Xtst, ytst)
