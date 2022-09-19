@@ -25,11 +25,12 @@
 # visualize, test, or save the data and results. However, you MAY NOT utilize
 # the package scikit-learn OR ANY OTHER machine learning package in THIS file.
 
-from cProfile import label
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 from sklearn import tree
+import graphviz
+from sklearn.metrics import confusion_matrix
 
 def partition(x):
     """
@@ -226,38 +227,7 @@ def visualize(tree, depth=0):
             print('|\t' * (depth + 1), end='')
             print('+-- [LABEL = {0}]'.format(sub_trees))
 
-def question3(x,y):
-    clf = tree.DecisionTreeClassifier(criterion="entropy")
-    clf = clf.fit(x,y)
-
-if __name__ == '__main__':
-    # Load the training data
-    M = np.genfromtxt('./monks-3.train', missing_values=0,
-                      skip_header=0, delimiter=',', dtype=int)
-    ytrn = M[:, 0]
-    Xtrn = M[:, 1:]
-
-    # Load the test data
-    M = np.genfromtxt('./monks-3.test', missing_values=0,
-                      skip_header=0, delimiter=',', dtype=int)
-    ytst = M[:, 0]
-    Xtst = M[:, 1:]
-
-    # Learn a decision tree of depth 3
-    decision_tree = id3(Xtrn, ytrn, max_depth=100)
-
-    visualize(decision_tree)
-
-    # Compute the test error
-    y_pred = [predict_example(x, decision_tree) for x in Xtst]
-    print(y_pred)
-    print(ytst)
-    tst_err = compute_error(ytst, y_pred)
-
-    print('Test Error = {0:4.2f}%.'.format(tst_err * 100))
-
-    # Learn a decision tree of depths 1-10 and plot a graph of the test error
-    depths = np.arange(1, 11)
+def learning_curve(Xtrn, ytrn, title):
     training_errors = []
     testing_errors = []
     for i in range (1,11):
@@ -266,12 +236,9 @@ if __name__ == '__main__':
         training_errors.append(compute_error(ytrn, y_pred_train))
         y_pred_test = [predict_example(x, decision_tree) for x in Xtst]
         testing_errors.append(compute_error(ytst, y_pred_test))
-    
-    print(depths)
-    print(training_errors)
-    print(testing_errors)
 
-    plt.title("Monks 3 Depth vs. Error")
+    depths = np.arange(1, 11)
+    plt.title(title)
     plt.xlabel("Depths")
     plt.ylabel("Error")
     plt.plot(depths, training_errors, color ="blue", marker='o', label='Training Errors')
@@ -279,3 +246,74 @@ if __name__ == '__main__':
     plt.legend()
     plt.show()
 
+def confusion_matrix_question2(Xtrn, ytrn, depth):
+    decision_tree = id3(Xtrn, ytrn, max_depth=depth)
+    visualize(decision_tree)
+    tp = 0
+    fp = 0
+    tn = 0
+    fn = 0
+    totalCount = len(ytst)
+    for i in range(totalCount):
+        if ytst[i] == 1 and y_pred[i] == 1:
+            tp += 1
+        elif ytst[i] == 1 and y_pred[i] == 0:
+            fp += 1
+        elif ytst[i] == 0 and y_pred[i] == 1:
+            fn += 1
+        elif ytst[i] == 0 and y_pred[i] == 0:
+            tn += 1
+    tp /= totalCount
+    fp /= totalCount
+    fn /= totalCount
+    tn /= totalCount
+    print('            Confusion Matrix')
+    print('           Positive   Negative')
+    print('         |----------|----------|')
+    print('         |          |          |')
+    print('Positive |  {0:5.2f}%  |  {1:5.2f}%  |'.format((tp * 100), (fn * 100)))
+    print('         |          |          |')
+    print('         |----------|----------|')
+    print('         |          |          |')
+    print('Negative |  {0:5.2f}%  |  {1:5.2f}%  |'.format((fp * 100), (tn * 100)))
+    print('         |          |          |')
+    print('         |----------|----------|')
+
+def question3(Xtrn, ytrn, Xtst, ytst):
+    clf = tree.DecisionTreeClassifier()
+    clf = clf.fit(Xtrn,ytrn)
+    graph = graphviz.Source(tree.export_graphviz(clf, out_file=None, filled=True))
+    graph.format = 'png'
+    graph.render('sklearn-learning-curve',view=True)
+    y_pred = clf.predict(Xtst)
+    print(confusion_matrix(ytst, y_pred))
+
+if __name__ == '__main__':
+    # Load the training data
+    M = np.genfromtxt('./monks-1.train', missing_values=0,
+                      skip_header=0, delimiter=',', dtype=int)
+    ytrn = M[:, 0]
+    Xtrn = M[:, 1:]
+
+    # Load the test data
+    M = np.genfromtxt('./monks-1.test', missing_values=0,
+                      skip_header=0, delimiter=',', dtype=int)
+    ytst = M[:, 0]
+    Xtst = M[:, 1:]
+
+    # Learn a decision tree of depth 3
+    decision_tree = id3(Xtrn, ytrn, max_depth=3)
+
+    # Compute the test error
+    y_pred = [predict_example(x, decision_tree) for x in Xtst]
+    tst_err = compute_error(ytst, y_pred)
+
+    print('Test Error = {0:4.2f}%.'.format(tst_err * 100))
+
+    # Learn a decision tree of depths 1-10 and plot a graph of the test error
+    # learning_curve(Xtrn, ytrn, "Monks 1 Learning curve")
+
+    # # Prints the confusion matrix and the learned decision tree for depth = 1 and 2
+    #     confusion_matrix_question2(Xtrn, ytrn, 1)
+    #     confusion_matrix_question2(Xtrn, ytrn, 2)
+    question3(Xtrn, ytrn, Xtst, ytst)
