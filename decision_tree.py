@@ -240,14 +240,12 @@ if __name__ == '__main__':
     Xtst = M[:, 1:]
 
     # Learn a decision tree of depth 3
-    decision_tree = id3(Xtrn, ytrn, max_depth=100)
+    decision_tree = id3(Xtrn, ytrn, max_depth=3)
 
-    visualize(decision_tree)
+    
 
     # Compute the test error
     y_pred = [predict_example(x, decision_tree) for x in Xtst]
-    print(y_pred)
-    print(ytst)
     tst_err = compute_error(ytst, y_pred)
 
     print('Test Error = {0:4.2f}%.'.format(tst_err * 100))
@@ -261,10 +259,6 @@ if __name__ == '__main__':
         y_pred = [predict_example(x, decision_tree) for x in Xtst]
         training_errors.append(compute_error(ytrn, y_pred))
         testing_errors.append(compute_error(ytst, y_pred))
-    
-    print(depths)
-    print(training_errors)
-    print(testing_errors)
 
     plt.title("Depth vs. Error")
     plt.xlabel("Depths")
@@ -272,4 +266,38 @@ if __name__ == '__main__':
     plt.plot(depths, testing_errors, color ="red")
     plt.plot(depths, training_errors, color ="blue")
     plt.show()
+
+    # Prints the confusion matrix and the learned decision tree for depth = 1 and 2
+    for i in range(1,3):
+        decision_tree = id3(Xtrn, ytrn, max_depth=i)
+        visualize(decision_tree)
+        tp = 0
+        fp = 0
+        tn = 0
+        fn = 0
+        totalCount = len(ytst)
+        for i in range(totalCount):
+            if ytst[i] == 1 and y_pred[i] == 1:
+                tp += 1
+            elif ytst[i] == 1 and y_pred[i] == 0:
+                fp += 1
+            elif ytst[i] == 0 and y_pred[i] == 1:
+                fn += 1
+            elif ytst[i] == 0 and y_pred[i] == 0:
+                tn += 1
+        tp /= totalCount
+        fp /= totalCount
+        fn /= totalCount
+        tn /= totalCount
+        print('            Confusion Matrix')
+        print('           Positive   Negative')
+        print('         |----------|----------|')
+        print('         |          |          |')
+        print('Positive |  {0:5.2f}%  |  {1:5.2f}%  |'.format((tp * 100), (fn * 100)))
+        print('         |          |          |')
+        print('         |----------|----------|')
+        print('         |          |          |')
+        print('Negative |  {0:5.2f}%  |  {1:5.2f}%  |'.format((fp * 100), (tn * 100)))
+        print('         |          |          |')
+        print('         |----------|----------|')
 
