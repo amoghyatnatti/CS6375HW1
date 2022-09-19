@@ -258,9 +258,9 @@ def confusion_matrix_question2(Xtrn, ytrn, depth):
         if ytst[i] == 1 and y_pred[i] == 1:
             tp += 1
         elif ytst[i] == 1 and y_pred[i] == 0:
-            fp += 1
-        elif ytst[i] == 0 and y_pred[i] == 1:
             fn += 1
+        elif ytst[i] == 0 and y_pred[i] == 1:
+            fp += 1
         elif ytst[i] == 0 and y_pred[i] == 0:
             tn += 1
     tp /= totalCount
@@ -311,9 +311,9 @@ if __name__ == '__main__':
     print('Test Error = {0:4.2f}%.'.format(tst_err * 100))
 
     # Learn a decision tree of depths 1-10 and plot a graph of the test error
-    learning_curve(Xtrn, ytrn, "Monks 3 Learning curve")
+    # learning_curve(Xtrn, ytrn, "Monks 3 Learning curve")
 
     # # Prints the confusion matrix and the learned decision tree for depth = 1 and 2
-    #     confusion_matrix_question2(Xtrn, ytrn, 1)
-    #     confusion_matrix_question2(Xtrn, ytrn, 2)
+    confusion_matrix_question2(Xtrn, ytrn, 1)
+    confusion_matrix_question2(Xtrn, ytrn, 2)
     # question3(Xtrn, ytrn, Xtst, ytst)
