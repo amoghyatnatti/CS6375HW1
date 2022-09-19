@@ -9,6 +9,7 @@
 # Gautam Kunapuli (gautam.kunapuli@utdallas.edu)
 # Sriraam Natarajan (sriraam.natarajan@utdallas.edu),
 #
+# Tahmid Imran and Amogh Yatnatti
 #
 # INSTRUCTIONS:
 # ------------
@@ -31,6 +32,8 @@ import matplotlib.pyplot as plt
 from sklearn import tree
 import graphviz
 from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn import preprocessing
 
 def partition(x):
     """
@@ -147,7 +150,10 @@ def id3(x, y, attribute_value_pairs=None, depth=0, max_depth=5):
                 attribute_value_pairs.append((i, uniqueVals[j]))
 
     if len(attribute_value_pairs) == 0 or depth == max_depth:
-        return np.bincount(y).argmax()
+        unique,pos = np.unique(y,return_inverse=True) #Finds all unique elements and their positions
+        counts = np.bincount(pos)                     #Count the number of each unique element
+        maxpos = counts.argmax() 
+        return unique[maxpos]
     
     node = {}
 
@@ -178,7 +184,7 @@ def predict_example(x, tree):
     """
 
     # INSERT YOUR CODE HERE. NOTE: THIS IS A RECURSIVE FUNCTION.
-    if isinstance(tree, (int, np.int64, np.int32)):
+    if isinstance(tree, (int, np.int64, np.int32, np.str_)):
             return tree
     for key in tree.keys():
         present = x[key[0]] == key[1]
@@ -227,7 +233,7 @@ def visualize(tree, depth=0):
             print('|\t' * (depth + 1), end='')
             print('+-- [LABEL = {0}]'.format(sub_trees))
 
-def learning_curve(Xtrn, ytrn, title):
+def learning_curve(Xtrn, ytrn, Xtst, ytst, title):
     training_errors = []
     testing_errors = []
     for i in range (1,11):
@@ -236,7 +242,11 @@ def learning_curve(Xtrn, ytrn, title):
         training_errors.append(compute_error(ytrn, y_pred_train))
         y_pred_test = [predict_example(x, decision_tree) for x in Xtst]
         testing_errors.append(compute_error(ytst, y_pred_test))
-
+        if i == 10:
+            visualize(decision_tree)
+            
+    print(f'Training Error: {training_errors[:-1]}')
+    print(f'Testing Error: {testing_errors[:-1]}')
     depths = np.arange(1, 11)
     plt.title(title)
     plt.xlabel("Depth")
@@ -246,7 +256,24 @@ def learning_curve(Xtrn, ytrn, title):
     plt.legend()
     plt.show()
 
-def confusion_matrix_question2(Xtrn, ytrn, ytst, depth):
+def questionA(training_file, testing_file, title):
+    # Load the training data
+    M = np.genfromtxt(training_file, missing_values=0,
+                      skip_header=0, delimiter=',', dtype=int)
+    ytrn = M[:, 0]
+    Xtrn = M[:, 1:]
+
+    # Load the test data
+    M = np.genfromtxt(testing_file, missing_values=0,
+                      skip_header=0, delimiter=',', dtype=int)
+    ytst = M[:, 0]
+    Xtst = M[:, 1:]
+
+    # Learn a decision tree of depths 1-10 and plot a graph of the test error
+    learning_curve(Xtrn, ytrn, Xtst, ytst, title)
+
+
+def confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, depth):
     decision_tree = id3(Xtrn, ytrn, max_depth=depth)
     visualize(decision_tree)
     tp = 0
@@ -254,6 +281,7 @@ def confusion_matrix_question2(Xtrn, ytrn, ytst, depth):
     tn = 0
     fn = 0
     totalCount = len(ytst)
+    y_pred = [predict_example(x, decision_tree) for x in Xtst]
     for i in range(totalCount):
         if ytst[i] == 1 and y_pred[i] == 1:
             tp += 1
@@ -265,59 +293,85 @@ def confusion_matrix_question2(Xtrn, ytrn, ytst, depth):
             tn += 1
     l =[[tp, fn], [fp, tn]]
     print(l)
-    tp /= totalCount
-    fp /= totalCount
-    fn /= totalCount
-    tn /= totalCount
     print('            Confusion Matrix')
     print('           Positive   Negative')
     print('         |----------|----------|')
     print('         |          |          |')
-    print('Positive |  {0:5.2f}%  |  {1:5.2f}%  |'.format((tp * 100), (fn * 100)))
+    print('Positive |{0:6}    |{1:6}    |'.format(tp, fn))
     print('         |          |          |')
     print('         |----------|----------|')
     print('         |          |          |')
-    print('Negative |  {0:5.2f}%  |  {1:5.2f}%  |'.format((fp * 100), (tn * 100)))
+    print('Negative |{0:6}    |{1:6}    |'.format(fp, tn))
     print('         |          |          |')
     print('         |----------|----------|')
 
-def question3(Xtrn, ytrn, Xtst, ytst):
-    clf = tree.DecisionTreeClassifier()
-    clf = clf.fit(Xtrn,ytrn)
-    graph = graphviz.Source(tree.export_graphviz(clf, out_file=None, filled=True))
-    graph.format = 'png'
-    graph.render('sklearn-learning-curve',view=True)
-    y_pred = clf.predict(Xtst)
-    print(confusion_matrix(ytst, y_pred))
-
-
-
-if __name__ == '__main__':
+def questionB():
     # Load the training data
-    M = np.genfromtxt('./monks-3.train', missing_values=0,
+    M = np.genfromtxt('./monks-1.train', missing_values=0,
                       skip_header=0, delimiter=',', dtype=int)
     ytrn = M[:, 0]
     Xtrn = M[:, 1:]
 
     # Load the test data
-    M = np.genfromtxt('./monks-3.test', missing_values=0,
+    M = np.genfromtxt('./monks-1.test', missing_values=0,
                       skip_header=0, delimiter=',', dtype=int)
     ytst = M[:, 0]
     Xtst = M[:, 1:]
+    confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, 1)
+    confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, 2)
 
-    # Learn a decision tree of depth 3
-    decision_tree = id3(Xtrn, ytrn, max_depth=3)
 
-    # Compute the test error
-    y_pred = [predict_example(x, decision_tree) for x in Xtst]
-    tst_err = compute_error(ytst, y_pred)
+def tree_and_confusion_matrix_questionC(Xtrn, ytrn, Xtst, ytst, filename):
+    clf = tree.DecisionTreeClassifier()
+    le = preprocessing.LabelEncoder()
+    for i in range(len(Xtrn[0])):
+        Xtrn[:,i] = le.fit_transform(Xtrn[:,i])
+        Xtst[:,i] = le.fit_transform(Xtst[:,i])
+    clf = clf.fit(Xtrn,ytrn)
+    graph = graphviz.Source(tree.export_graphviz(clf, out_file=None, filled=True))
+    graph.format = 'png'
+    graph.render(filename,view=True)
+    y_pred = clf.predict(Xtst)
+    print("Sklearn's Confusion Matrix:")
+    print(confusion_matrix(ytst, y_pred))
 
-    print('Test Error = {0:4.2f}%.'.format(tst_err * 100))
 
-    # Learn a decision tree of depths 1-10 and plot a graph of the test error
-    # learning_curve(Xtrn, ytrn, "Monks 3 Learning curve")
+def questionC():
+    # Load the training data
+    M = np.genfromtxt('./monks-1.train', missing_values=0,
+                      skip_header=0, delimiter=',', dtype=int)
+    ytrn = M[:, 0]
+    Xtrn = M[:, 1:]
 
-    # # Prints the confusion matrix and the learned decision tree for depth = 1 and 2
-    # confusion_matrix_question2(Xtrn, ytrn, ytst, 1)
-    # confusion_matrix_question2(Xtrn, ytrn, ytst, 2)
-    # question3(Xtrn, ytrn, Xtst, ytst)
+    # Load the test data
+    M = np.genfromtxt('./monks-1.test', missing_values=0,
+                      skip_header=0, delimiter=',', dtype=int)
+    ytst = M[:, 0]
+    Xtst = M[:, 1:]
+    tree_and_confusion_matrix_questionC(Xtrn, ytrn, Xtst, ytst, "Scikit-Decision-Tree")
+
+def questionD():
+    data = np.genfromtxt('./car.data', missing_values=0,
+                      skip_header=0, delimiter=',', dtype=str)
+    y = data[:, (len(data[0]) - 1)]
+    # convert labels to binary labels: unacc = 0; acc, good, vgood = 1
+    for i in range(len(y)):
+        if y[i] != 'unacc':
+            y[i] = 1
+        else:
+            y[i] = 0
+    y = y.astype(np.int64)
+    x = data[:, 0:len(data[0])-1]
+    Xtrn, Xtst, ytrn, ytst = train_test_split(x, y, test_size=.3, random_state=42)
+    confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, 1)
+    confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, 2)
+    tree_and_confusion_matrix_questionC(Xtrn, ytrn, Xtst, ytst, "Car-Data-Decision-Tree")
+
+
+if __name__ == '__main__':
+    questionA('./monks-1.train', './monks-1.test', "Monks 1 Learning Curve")
+    questionA('./monks-2.train', './monks-2.test', "Monks 2 Learning Curve")
+    questionA('./monks-3.train', './monks-3.test', "Monks 3 Learning Curve")
+    questionB()
+    questionC()
+    questionD()
