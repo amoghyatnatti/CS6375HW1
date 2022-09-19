@@ -239,7 +239,7 @@ def learning_curve(Xtrn, ytrn, title):
 
     depths = np.arange(1, 11)
     plt.title(title)
-    plt.xlabel("Depths")
+    plt.xlabel("Depth")
     plt.ylabel("Error")
     plt.plot(depths, training_errors, color ="blue", marker='o', label='Training Errors')
     plt.plot(depths, testing_errors, color ="red", marker='o', label='Testing Errors')
@@ -290,13 +290,13 @@ def question3(Xtrn, ytrn, Xtst, ytst):
 
 if __name__ == '__main__':
     # Load the training data
-    M = np.genfromtxt('./monks-1.train', missing_values=0,
+    M = np.genfromtxt('./monks-3.train', missing_values=0,
                       skip_header=0, delimiter=',', dtype=int)
     ytrn = M[:, 0]
     Xtrn = M[:, 1:]
 
     # Load the test data
-    M = np.genfromtxt('./monks-1.test', missing_values=0,
+    M = np.genfromtxt('./monks-3.test', missing_values=0,
                       skip_header=0, delimiter=',', dtype=int)
     ytst = M[:, 0]
     Xtst = M[:, 1:]
@@ -311,9 +311,9 @@ if __name__ == '__main__':
     print('Test Error = {0:4.2f}%.'.format(tst_err * 100))
 
     # Learn a decision tree of depths 1-10 and plot a graph of the test error
-    # learning_curve(Xtrn, ytrn, "Monks 1 Learning curve")
+    learning_curve(Xtrn, ytrn, "Monks 3 Learning curve")
 
     # # Prints the confusion matrix and the learned decision tree for depth = 1 and 2
     #     confusion_matrix_question2(Xtrn, ytrn, 1)
     #     confusion_matrix_question2(Xtrn, ytrn, 2)
-    question3(Xtrn, ytrn, Xtst, ytst)
+    # question3(Xtrn, ytrn, Xtst, ytst)
