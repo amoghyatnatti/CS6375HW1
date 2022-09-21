@@ -32,8 +32,9 @@ import matplotlib.pyplot as plt
 from sklearn import tree
 import graphviz
 from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
+import random
 from sklearn import preprocessing
+
 
 def partition(x):
     """
@@ -137,7 +138,7 @@ def id3(x, y, attribute_value_pairs=None, depth=0, max_depth=5):
              (1, 1, True): 1}},
      (4, 1, True): 1}
     """
-    
+
     # INSERT YOUR CODE HERE. NOTE: THIS IS A RECURSIVE FUNCTION.
     if len(set(y)) == 1:
         return y[0]
@@ -150,27 +151,30 @@ def id3(x, y, attribute_value_pairs=None, depth=0, max_depth=5):
                 attribute_value_pairs.append((i, uniqueVals[j]))
 
     if len(attribute_value_pairs) == 0 or depth == max_depth:
-        unique,pos = np.unique(y,return_inverse=True) #Finds all unique elements and their positions
-        counts = np.bincount(pos)                     #Count the number of each unique element
-        maxpos = counts.argmax() 
+        # Finds all unique elements and their positions
+        unique, pos = np.unique(y, return_inverse=True)
+        counts = np.bincount(pos)  # Count the number of each unique element
+        maxpos = counts.argmax()
         return unique[maxpos]
-    
+
     node = {}
 
     maxInfo = 0
     maxVariable = None
-    for (k,v) in attribute_value_pairs:
-        info = mutual_information(np.array(x[:,k] == v), y)
+    for (k, v) in attribute_value_pairs:
+        info = mutual_information(np.array(x[:, k] == v), y)
         if info > maxInfo:
             maxInfo = info
-            maxVariable = (k,v)
- 
-    xTrue = x[(x[:,maxVariable[0]] == maxVariable[1])]
-    xFalse = x[(x[:,maxVariable[0]] != maxVariable[1])]
-    yTrue = y[(x[:,maxVariable[0]] == maxVariable[1])]
-    yFalse = y[(x[:,maxVariable[0]] != maxVariable[1])]
-    node[(maxVariable[0], maxVariable[1], False)] = id3(xFalse, yFalse, attribute_value_pairs=attribute_value_pairs, depth=depth+1, max_depth=max_depth)
-    node[(maxVariable[0], maxVariable[1], True)] = id3(xTrue, yTrue, attribute_value_pairs=attribute_value_pairs, depth=depth+1, max_depth=max_depth)
+            maxVariable = (k, v)
+
+    xTrue = x[(x[:, maxVariable[0]] == maxVariable[1])]
+    xFalse = x[(x[:, maxVariable[0]] != maxVariable[1])]
+    yTrue = y[(x[:, maxVariable[0]] == maxVariable[1])]
+    yFalse = y[(x[:, maxVariable[0]] != maxVariable[1])]
+    node[(maxVariable[0], maxVariable[1], False)] = id3(xFalse, yFalse,
+                                                        attribute_value_pairs=attribute_value_pairs, depth=depth+1, max_depth=max_depth)
+    node[(maxVariable[0], maxVariable[1], True)] = id3(xTrue, yTrue,
+                                                       attribute_value_pairs=attribute_value_pairs, depth=depth+1, max_depth=max_depth)
 
     return node
 
@@ -185,7 +189,7 @@ def predict_example(x, tree):
 
     # INSERT YOUR CODE HERE. NOTE: THIS IS A RECURSIVE FUNCTION.
     if isinstance(tree, (int, np.int64, np.int32, np.str_)):
-            return tree
+        return tree
     for key in tree.keys():
         present = x[key[0]] == key[1]
         predicted_label = predict_example(x, tree[(key[0], key[1], present)])
@@ -205,7 +209,6 @@ def compute_error(y_true, y_pred):
     for i in range(len(y_true)):
         count += 0 if y_true[i] == y_pred[i] else 1
     return count / len(y_true)
-
 
 
 def visualize(tree, depth=0):
@@ -233,10 +236,11 @@ def visualize(tree, depth=0):
             print('|\t' * (depth + 1), end='')
             print('+-- [LABEL = {0}]'.format(sub_trees))
 
+
 def learning_curve(Xtrn, ytrn, Xtst, ytst, title):
     training_errors = []
     testing_errors = []
-    for i in range (1,11):
+    for i in range(1, 11):
         decision_tree = id3(Xtrn, ytrn, max_depth=i)
         y_pred_train = [predict_example(x, decision_tree) for x in Xtrn]
         training_errors.append(compute_error(ytrn, y_pred_train))
@@ -244,17 +248,20 @@ def learning_curve(Xtrn, ytrn, Xtst, ytst, title):
         testing_errors.append(compute_error(ytst, y_pred_test))
         if i == 10:
             visualize(decision_tree)
-            
+
     print(f'Training Error: {training_errors[:-1]}')
     print(f'Testing Error: {testing_errors[:-1]}')
     depths = np.arange(1, 11)
     plt.title(title)
     plt.xlabel("Depth")
     plt.ylabel("Error")
-    plt.plot(depths, training_errors, color ="blue", marker='o', label='Training Errors')
-    plt.plot(depths, testing_errors, color ="red", marker='o', label='Testing Errors')
+    plt.plot(depths, training_errors, color="blue",
+             marker='o', label='Training Errors')
+    plt.plot(depths, testing_errors, color="red",
+             marker='o', label='Testing Errors')
     plt.legend()
     plt.show()
+
 
 def questionA(training_file, testing_file, title):
     # Load the training data
@@ -291,7 +298,7 @@ def confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, depth):
             fp += 1
         elif ytst[i] == 0 and y_pred[i] == 0:
             tn += 1
-    l =[[tp, fn], [fp, tn]]
+    l = [[tp, fn], [fp, tn]]
     print(l)
     print('            Confusion Matrix')
     print('           Positive   Negative')
@@ -304,6 +311,7 @@ def confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, depth):
     print('Negative |{0:6}    |{1:6}    |'.format(fp, tn))
     print('         |          |          |')
     print('         |----------|----------|')
+
 
 def questionB():
     # Load the training data
@@ -323,14 +331,15 @@ def questionB():
 
 def tree_and_confusion_matrix_questionC(Xtrn, ytrn, Xtst, ytst, filename):
     clf = tree.DecisionTreeClassifier()
-    le = preprocessing.LabelEncoder()
-    for i in range(len(Xtrn[0])):
-        Xtrn[:,i] = le.fit_transform(Xtrn[:,i])
-        Xtst[:,i] = le.fit_transform(Xtst[:,i])
-    clf = clf.fit(Xtrn,ytrn)
-    graph = graphviz.Source(tree.export_graphviz(clf, out_file=None, filled=True))
+    # le = preprocessing.LabelEncoder()
+    # for i in range(len(Xtrn[0])):
+    #     Xtrn[:, i] = le.fit_transform(Xtrn[:, i])
+    #     Xtst[:, i] = le.fit_transform(Xtst[:, i])
+    clf = clf.fit(Xtrn, ytrn)
+    graph = graphviz.Source(tree.export_graphviz(
+        clf, out_file=None, filled=True))
     graph.format = 'png'
-    graph.render(filename,view=True)
+    graph.render(filename, view=True)
     y_pred = clf.predict(Xtst)
     print("Sklearn's Confusion Matrix:")
     print(confusion_matrix(ytst, y_pred))
@@ -348,11 +357,21 @@ def questionC():
                       skip_header=0, delimiter=',', dtype=int)
     ytst = M[:, 0]
     Xtst = M[:, 1:]
-    tree_and_confusion_matrix_questionC(Xtrn, ytrn, Xtst, ytst, "Scikit-Decision-Tree")
+    tree_and_confusion_matrix_questionC(
+        Xtrn, ytrn, Xtst, ytst, "Scikit-Decision-Tree")
+
 
 def questionD():
     data = np.genfromtxt('./car.data', missing_values=0,
-                      skip_header=0, delimiter=',', dtype=str)
+                         skip_header=0, delimiter=',', dtype=str)
+    # Shuffles dataset
+    random.seed(52)
+    random.shuffle(data)
+    x = data[:, 0:len(data[0])-1]
+    for i in range(len(data[0])-1):
+        uniqueVals = list(set(x[:, i]))
+        for j in range(len(x[:, i])):
+            x[:, i][j] = uniqueVals.index(x[:, i][j]) + 1
     y = data[:, (len(data[0]) - 1)]
     # convert labels to binary labels: unacc = 0; acc, good, vgood = 1
     for i in range(len(y)):
@@ -361,17 +380,23 @@ def questionD():
         else:
             y[i] = 0
     y = y.astype(np.int64)
-    x = data[:, 0:len(data[0])-1]
-    Xtrn, Xtst, ytrn, ytst = train_test_split(x, y, test_size=.3, random_state=42)
+
+    # Splits dataset into 70-30 training testing split
+    ytst = y[int((len(data)+1)*.70):]
+    Xtst = x[int((len(data)+1)*.70):]
+    Xtrn = x[:int((len(data)+1)*.70)]
+    ytrn = y[:int((len(data)+1)*.70)]
+    print(Xtrn)
     confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, 1)
     confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, 2)
-    tree_and_confusion_matrix_questionC(Xtrn, ytrn, Xtst, ytst, "Car-Data-Decision-Tree")
+    tree_and_confusion_matrix_questionC(
+        Xtrn, ytrn, Xtst, ytst, "Car-Data-Decision-Tree")
 
 
 if __name__ == '__main__':
-    questionA('./monks-1.train', './monks-1.test', "Monks 1 Learning Curve")
-    questionA('./monks-2.train', './monks-2.test', "Monks 2 Learning Curve")
-    questionA('./monks-3.train', './monks-3.test', "Monks 3 Learning Curve")
-    questionB()
-    questionC()
+    # questionA('./monks-1.train', './monks-1.test', "Monks 1 Learning Curve")
+    # questionA('./monks-2.train', './monks-2.test', "Monks 2 Learning Curve")
+    # questionA('./monks-3.train', './monks-3.test', "Monks 3 Learning Curve")
+    # questionB()
+    # questionC()
     questionD()
