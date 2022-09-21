@@ -331,10 +331,6 @@ def questionB():
 
 def tree_and_confusion_matrix_questionC(Xtrn, ytrn, Xtst, ytst, filename):
     clf = tree.DecisionTreeClassifier()
-    # le = preprocessing.LabelEncoder()
-    # for i in range(len(Xtrn[0])):
-    #     Xtrn[:, i] = le.fit_transform(Xtrn[:, i])
-    #     Xtst[:, i] = le.fit_transform(Xtst[:, i])
     clf = clf.fit(Xtrn, ytrn)
     graph = graphviz.Source(tree.export_graphviz(
         clf, out_file=None, filled=True))
@@ -360,16 +356,26 @@ def questionC():
     tree_and_confusion_matrix_questionC(
         Xtrn, ytrn, Xtst, ytst, "Scikit-Decision-Tree")
 
+def unique(list1):
+  
+    # initialize a null list
+    unique_list = []
+  
+    # traverse for all elements
+    for x in list1:
+        # check if exists in unique_list or not
+        if x not in unique_list:
+            unique_list.append(x)
+    # print list
+    return unique_list
 
 def questionD():
     data = np.genfromtxt('./car.data', missing_values=0,
                          skip_header=0, delimiter=',', dtype=str)
-    # Shuffles dataset
-    random.seed(52)
-    random.shuffle(data)
+    
     x = data[:, 0:len(data[0])-1]
     for i in range(len(data[0])-1):
-        uniqueVals = list(set(x[:, i]))
+        uniqueVals = unique(x[:, i])
         for j in range(len(x[:, i])):
             x[:, i][j] = uniqueVals.index(x[:, i][j]) + 1
     y = data[:, (len(data[0]) - 1)]
@@ -386,7 +392,6 @@ def questionD():
     Xtst = x[int((len(data)+1)*.70):]
     Xtrn = x[:int((len(data)+1)*.70)]
     ytrn = y[:int((len(data)+1)*.70)]
-    print(Xtrn)
     confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, 1)
     confusion_matrix_questionB(Xtrn, ytrn, Xtst, ytst, 2)
     tree_and_confusion_matrix_questionC(
@@ -394,9 +399,9 @@ def questionD():
 
 
 if __name__ == '__main__':
-    # questionA('./monks-1.train', './monks-1.test', "Monks 1 Learning Curve")
-    # questionA('./monks-2.train', './monks-2.test', "Monks 2 Learning Curve")
-    # questionA('./monks-3.train', './monks-3.test', "Monks 3 Learning Curve")
-    # questionB()
-    # questionC()
+    questionA('./monks-1.train', './monks-1.test', "Monks 1 Learning Curve")
+    questionA('./monks-2.train', './monks-2.test', "Monks 2 Learning Curve")
+    questionA('./monks-3.train', './monks-3.test', "Monks 3 Learning Curve")
+    questionB()
+    questionC()
     questionD()
